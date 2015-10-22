@@ -2,30 +2,31 @@
 #include <stdlib.h>
 #include <wiringPi.h>
 
+const int SENSOR_READ_PIN = 15;
+const int SENSOR_WRITE_PIN = 16;
 
-int main (void)
-{
+void setup() {
     wiringPiSetup(); //Setup WiringPi
-    pinMode (15, INPUT);
-    pinMode (16, OUTPUT);
-    int read[8];
-    int x,y; //y is genuinely ony there for running reasons
+    pinMode(SENSOR_READ_PIN, INPUT);
+    pinMode(SENSOR_WRITE_PIN, OUTPUT);
     system("echo -n \"$(date +%s)\""); //Bad practice I know but can't be arsed to engage the full C date stuff
-    printf(",");
-    for(x = 0; x <= 8; x++) //for 8 bits
-    {
-        digitalWrite(16,HIGH);
+}
+
+uint8_t read_sensor() {
+    uint8_t value = 0;
+    // 8 bits in reverse order
+    for (int x = 0; x < 8; x++) {
+        digitalWrite(SENSOR_WRITE_PIN, HIGH);
         delay(10);
-        y = x; //Genuinely not used. Remove this and the code stops working.
-        read[x] = !digitalRead(15);
-        digitalWrite(16,LOW);
+        uint8_t bit = (digitalRead(SENSOR_READ_PIN) == LOW) ? 0x1 : 0x0;
+        value |= bit << x;
+        digitalWrite(SENSOR_WRITE_PIN, LOW);
         delay(10);
     }
-    x = 10;
-    for(x = 8; x >= 0; x--)
-    {
-        printf("%d",read[x]); //print out the 1's and 0's in the opposite order they are read in (are read backwards)
-    }
-    printf("\n");
-    return 0;
+    return value;
+}
+
+int main() {
+    setup();
+    printf("%u\n", read_sensor());
 }
